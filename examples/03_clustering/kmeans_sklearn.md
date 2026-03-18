@@ -50,7 +50,7 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/kmeans_sklearn.py`](../../02_classification/kmeans_sklearn.py)
+Full implementation: [`03_clustering/kmeans_sklearn.py`](../../03_clustering/kmeans_sklearn.py)
 
 Related:
 - [K-Means - NumPy (from scratch)](kmeans_numpy.md)

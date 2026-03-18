@@ -50,7 +50,7 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/lstm_sklearn.py`](../../02_classification/lstm_sklearn.py)
+Full implementation: [`04_time_series/lstm_sklearn.py`](../../04_time_series/lstm_sklearn.py)
 
 Related:
 - [LSTM - NumPy (from scratch)](lstm_numpy.md)

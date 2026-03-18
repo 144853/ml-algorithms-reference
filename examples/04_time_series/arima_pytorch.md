@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/arima_pytorch.py`](../../02_classification/arima_pytorch.py)
+Full implementation: [`04_time_series/arima_pytorch.py`](../../04_time_series/arima_pytorch.py)
 
 Related:
 - [ARIMA - NumPy (from scratch)](arima_numpy.md)

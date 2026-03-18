@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/prophet_pytorch.py`](../../02_classification/prophet_pytorch.py)
+Full implementation: [`04_time_series/prophet_pytorch.py`](../../04_time_series/prophet_pytorch.py)
 
 Related:
 - [Prophet - NumPy (from scratch)](prophet_numpy.md)

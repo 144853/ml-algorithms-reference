@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# EfficientNet - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of EfficientNet. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[EfficientNet - Full Documentation](efficientnet_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`06_computer_vision/efficientnet_pytorch.py`](../../06_computer_vision/efficientnet_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [EfficientNet - NumPy (from scratch)](efficientnet_numpy.md)
+- [EfficientNet - Scikit-learn](efficientnet_sklearn.md)
 
 ---
 

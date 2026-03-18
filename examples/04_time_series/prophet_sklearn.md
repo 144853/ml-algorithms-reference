@@ -50,7 +50,7 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/prophet_sklearn.py`](../../02_classification/prophet_sklearn.py)
+Full implementation: [`04_time_series/prophet_sklearn.py`](../../04_time_series/prophet_sklearn.py)
 
 Related:
 - [Prophet - NumPy (from scratch)](prophet_numpy.md)

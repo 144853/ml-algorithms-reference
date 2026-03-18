@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/lstm_pytorch.py`](../../02_classification/lstm_pytorch.py)
+Full implementation: [`04_time_series/lstm_pytorch.py`](../../04_time_series/lstm_pytorch.py)
 
 Related:
 - [LSTM - NumPy (from scratch)](lstm_numpy.md)

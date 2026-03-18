@@ -1,10 +1,10 @@
-# Temporal Fusion Transformer - Scikit-learn Implementation
+# LLM RAG - Scikit-learn Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **scikit-learn** implementation of Temporal Fusion Transformer. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **scikit-learn** implementation of LLM RAG. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[Temporal Fusion Transformer - Full Documentation](temporal_fusion_transformer_numpy.md)**
+👉 **[LLM RAG - Full Documentation](llm_rag_numpy.md)**
 
 ---
 
@@ -50,11 +50,11 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`04_time_series/temporal_fusion_transformer_sklearn.py`](../../04_time_series/temporal_fusion_transformer_sklearn.py)
+Full implementation: [`05_nlp/llm_rag_sklearn.py`](../../05_nlp/llm_rag_sklearn.py)
 
 Related:
-- [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)
-- [Temporal Fusion Transformer - PyTorch](temporal_fusion_transformer_pytorch.md)
+- [LLM RAG - NumPy (from scratch)](llm_rag_numpy.md)
+- [LLM RAG - PyTorch](llm_rag_pytorch.md)
 
 ---
 

@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/hierarchical_clustering_pytorch.py`](../../02_classification/hierarchical_clustering_pytorch.py)
+Full implementation: [`03_clustering/hierarchical_clustering_pytorch.py`](../../03_clustering/hierarchical_clustering_pytorch.py)
 
 Related:
 - [Hierarchical Clustering - NumPy (from scratch)](hierarchical_clustering_numpy.md)

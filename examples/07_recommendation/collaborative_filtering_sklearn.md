@@ -1,10 +1,10 @@
-# Temporal Fusion Transformer - Scikit-learn Implementation
+# Collaborative Filtering - Scikit-learn Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **scikit-learn** implementation of Temporal Fusion Transformer. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **scikit-learn** implementation of Collaborative Filtering. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[Temporal Fusion Transformer - Full Documentation](temporal_fusion_transformer_numpy.md)**
+👉 **[Collaborative Filtering - Full Documentation](collaborative_filtering_numpy.md)**
 
 ---
 
@@ -50,11 +50,11 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`04_time_series/temporal_fusion_transformer_sklearn.py`](../../04_time_series/temporal_fusion_transformer_sklearn.py)
+Full implementation: [`07_recommendation/collaborative_filtering_sklearn.py`](../../07_recommendation/collaborative_filtering_sklearn.py)
 
 Related:
-- [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)
-- [Temporal Fusion Transformer - PyTorch](temporal_fusion_transformer_pytorch.md)
+- [Collaborative Filtering - NumPy (from scratch)](collaborative_filtering_numpy.md)
+- [Collaborative Filtering - PyTorch](collaborative_filtering_pytorch.md)
 
 ---
 

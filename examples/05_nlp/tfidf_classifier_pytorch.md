@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# TF-IDF Classifier - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of TF-IDF Classifier. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[TF-IDF Classifier - Full Documentation](tfidf_classifier_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`05_nlp/tfidf_classifier_pytorch.py`](../../05_nlp/tfidf_classifier_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [TF-IDF Classifier - NumPy (from scratch)](tfidf_classifier_numpy.md)
+- [TF-IDF Classifier - Scikit-learn](tfidf_classifier_sklearn.md)
 
 ---
 

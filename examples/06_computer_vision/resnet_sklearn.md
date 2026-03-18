@@ -1,10 +1,10 @@
-# Temporal Fusion Transformer - Scikit-learn Implementation
+# ResNet - Scikit-learn Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **scikit-learn** implementation of Temporal Fusion Transformer. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **scikit-learn** implementation of ResNet. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[Temporal Fusion Transformer - Full Documentation](temporal_fusion_transformer_numpy.md)**
+👉 **[ResNet - Full Documentation](resnet_numpy.md)**
 
 ---
 
@@ -50,11 +50,11 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`04_time_series/temporal_fusion_transformer_sklearn.py`](../../04_time_series/temporal_fusion_transformer_sklearn.py)
+Full implementation: [`06_computer_vision/resnet_sklearn.py`](../../06_computer_vision/resnet_sklearn.py)
 
 Related:
-- [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)
-- [Temporal Fusion Transformer - PyTorch](temporal_fusion_transformer_pytorch.md)
+- [ResNet - NumPy (from scratch)](resnet_numpy.md)
+- [ResNet - PyTorch](resnet_pytorch.md)
 
 ---
 

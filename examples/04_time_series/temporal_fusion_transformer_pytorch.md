@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/temporal_fusion_transformer_pytorch.py`](../../02_classification/temporal_fusion_transformer_pytorch.py)
+Full implementation: [`04_time_series/temporal_fusion_transformer_pytorch.py`](../../04_time_series/temporal_fusion_transformer_pytorch.py)
 
 Related:
 - [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)

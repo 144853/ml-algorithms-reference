@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# BERT Classifier - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of BERT Classifier. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[BERT Classifier - Full Documentation](bert_classifier_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`05_nlp/bert_classifier_pytorch.py`](../../05_nlp/bert_classifier_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [BERT Classifier - NumPy (from scratch)](bert_classifier_numpy.md)
+- [BERT Classifier - Scikit-learn](bert_classifier_sklearn.md)
 
 ---
 

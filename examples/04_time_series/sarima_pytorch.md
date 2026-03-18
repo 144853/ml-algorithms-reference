@@ -60,7 +60,7 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/sarima_pytorch.py`](../../02_classification/sarima_pytorch.py)
+Full implementation: [`04_time_series/sarima_pytorch.py`](../../04_time_series/sarima_pytorch.py)
 
 Related:
 - [SARIMA - NumPy (from scratch)](sarima_numpy.md)

@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# Collaborative Filtering - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of Collaborative Filtering. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[Collaborative Filtering - Full Documentation](collaborative_filtering_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`07_recommendation/collaborative_filtering_pytorch.py`](../../07_recommendation/collaborative_filtering_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [Collaborative Filtering - NumPy (from scratch)](collaborative_filtering_numpy.md)
+- [Collaborative Filtering - Scikit-learn](collaborative_filtering_sklearn.md)
 
 ---
 

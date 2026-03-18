@@ -50,7 +50,7 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`02_classification/hierarchical_clustering_sklearn.py`](../../02_classification/hierarchical_clustering_sklearn.py)
+Full implementation: [`03_clustering/hierarchical_clustering_sklearn.py`](../../03_clustering/hierarchical_clustering_sklearn.py)
 
 Related:
 - [Hierarchical Clustering - NumPy (from scratch)](hierarchical_clustering_numpy.md)

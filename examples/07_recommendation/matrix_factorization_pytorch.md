@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# Matrix Factorization - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of Matrix Factorization. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[Matrix Factorization - Full Documentation](matrix_factorization_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`07_recommendation/matrix_factorization_pytorch.py`](../../07_recommendation/matrix_factorization_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [Matrix Factorization - NumPy (from scratch)](matrix_factorization_numpy.md)
+- [Matrix Factorization - Scikit-learn](matrix_factorization_sklearn.md)
 
 ---
 

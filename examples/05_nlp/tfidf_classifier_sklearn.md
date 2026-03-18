@@ -1,10 +1,10 @@
-# Temporal Fusion Transformer - Scikit-learn Implementation
+# TF-IDF Classifier - Scikit-learn Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **scikit-learn** implementation of Temporal Fusion Transformer. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **scikit-learn** implementation of TF-IDF Classifier. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[Temporal Fusion Transformer - Full Documentation](temporal_fusion_transformer_numpy.md)**
+👉 **[TF-IDF Classifier - Full Documentation](tfidf_classifier_numpy.md)**
 
 ---
 
@@ -50,11 +50,11 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`04_time_series/temporal_fusion_transformer_sklearn.py`](../../04_time_series/temporal_fusion_transformer_sklearn.py)
+Full implementation: [`05_nlp/tfidf_classifier_sklearn.py`](../../05_nlp/tfidf_classifier_sklearn.py)
 
 Related:
-- [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)
-- [Temporal Fusion Transformer - PyTorch](temporal_fusion_transformer_pytorch.md)
+- [TF-IDF Classifier - NumPy (from scratch)](tfidf_classifier_numpy.md)
+- [TF-IDF Classifier - PyTorch](tfidf_classifier_pytorch.md)
 
 ---
 

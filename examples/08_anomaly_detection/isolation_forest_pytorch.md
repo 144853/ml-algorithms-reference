@@ -1,10 +1,10 @@
-# DBSCAN - PyTorch Implementation
+# Isolation Forest - PyTorch Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **PyTorch** implementation of DBSCAN. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **PyTorch** implementation of Isolation Forest. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[DBSCAN - Full Documentation](dbscan_numpy.md)**
+👉 **[Isolation Forest - Full Documentation](isolation_forest_numpy.md)**
 
 ---
 
@@ -60,11 +60,11 @@ y_train = y_train.to(device)
 
 ## 📝 **Code Reference**
 
-Full implementation: [`03_clustering/dbscan_pytorch.py`](../../03_clustering/dbscan_pytorch.py)
+Full implementation: [`08_anomaly_detection/isolation_forest_pytorch.py`](../../08_anomaly_detection/isolation_forest_pytorch.py)
 
 Related:
-- [DBSCAN - NumPy (from scratch)](dbscan_numpy.md)
-- [DBSCAN - Scikit-learn](dbscan_sklearn.md)
+- [Isolation Forest - NumPy (from scratch)](isolation_forest_numpy.md)
+- [Isolation Forest - Scikit-learn](isolation_forest_sklearn.md)
 
 ---
 

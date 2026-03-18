@@ -1,10 +1,10 @@
-# Temporal Fusion Transformer - Scikit-learn Implementation
+# t-SNE - Scikit-learn Implementation
 
 ## 📚 **Quick Reference**
 
-This is the **scikit-learn** implementation of Temporal Fusion Transformer. For the complete algorithm explanation, mathematical background, and use cases, see:
+This is the **scikit-learn** implementation of t-SNE. For the complete algorithm explanation, mathematical background, and use cases, see:
 
-👉 **[Temporal Fusion Transformer - Full Documentation](temporal_fusion_transformer_numpy.md)**
+👉 **[t-SNE - Full Documentation](tsne_numpy.md)**
 
 ---
 
@@ -50,11 +50,11 @@ See scikit-learn documentation for full parameter list.
 
 ## 📝 **Code Reference**
 
-Full implementation: [`04_time_series/temporal_fusion_transformer_sklearn.py`](../../04_time_series/temporal_fusion_transformer_sklearn.py)
+Full implementation: [`09_dimensionality_reduction/tsne_sklearn.py`](../../09_dimensionality_reduction/tsne_sklearn.py)
 
 Related:
-- [Temporal Fusion Transformer - NumPy (from scratch)](temporal_fusion_transformer_numpy.md)
-- [Temporal Fusion Transformer - PyTorch](temporal_fusion_transformer_pytorch.md)
+- [t-SNE - NumPy (from scratch)](tsne_numpy.md)
+- [t-SNE - PyTorch](tsne_pytorch.md)
 
 ---
 
