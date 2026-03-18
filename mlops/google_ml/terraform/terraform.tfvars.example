@@ -1,0 +1,20 @@
+# Example: Deploy Linear Regression
+# Copy this to terraform.tfvars and modify as needed.
+
+project_id     = "your-gcp-project-id"
+algorithm_name = "linear_regression_sklearn"
+environment    = "dev"
+region         = "us-central1"
+machine_type   = "n1-standard-4"
+
+# For production:
+# environment        = "prod"
+# machine_type       = "n1-standard-8"
+# enable_autoscaling = true
+# min_replica_count  = 2
+# max_replica_count  = 8
+
+# Other algorithms (just swap the name):
+# algorithm_name = "random_forest_sklearn"
+# algorithm_name = "cnn_pytorch"
+# algorithm_name = "collaborative_filtering_sklearn"

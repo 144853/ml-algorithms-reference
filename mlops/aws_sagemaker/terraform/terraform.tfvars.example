@@ -1,0 +1,22 @@
+# Example: Deploy Linear Regression
+# Copy this to terraform.tfvars and modify as needed.
+# To deploy a DIFFERENT algorithm, just change algorithm_name.
+
+algorithm_name = "linear_regression_sklearn"
+environment    = "dev"
+aws_region     = "us-east-1"
+instance_type  = "ml.m5.large"
+instance_count = 1
+
+# For production:
+# environment        = "prod"
+# instance_type      = "ml.m5.xlarge"
+# enable_autoscaling = true
+# min_capacity       = 2
+# max_capacity       = 8
+
+# Other algorithms (just swap the name):
+# algorithm_name = "random_forest_sklearn"
+# algorithm_name = "xgboost_sklearn"
+# algorithm_name = "lstm_pytorch"
+# algorithm_name = "kmeans_sklearn"

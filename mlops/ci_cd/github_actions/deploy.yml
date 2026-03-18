@@ -1,0 +1,313 @@
+name: Deploy ML Algorithm
+
+on:
+  workflow_dispatch:
+    inputs:
+      algorithm_name:
+        description: "Algorithm to deploy (e.g., linear_regression_sklearn, random_forest_sklearn)"
+        required: true
+        type: string
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      cloud_provider:
+        description: "Cloud provider"
+        required: true
+        type: choice
+        options:
+          - aws_sagemaker
+          - azure_ml
+          - google_ml
+      hyperparams:
+        description: "JSON hyperparameters (optional)"
+        required: false
+        type: string
+        default: "{}"
+
+  push:
+    branches: [main]
+    paths:
+      - "0*/**"  # Any algorithm file change
+
+env:
+  ALGORITHM_NAME: ${{ github.event.inputs.algorithm_name || 'linear_regression_sklearn' }}
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+  CLOUD_PROVIDER: ${{ github.event.inputs.cloud_provider || 'aws_sagemaker' }}
+
+jobs:
+  # --- Validate & Test ---
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate algorithm exists
+        run: |
+          ALGO_FILE=$(find . -name "${{ env.ALGORITHM_NAME }}.py" -not -path "*/mlops/*" | head -1)
+          if [ -z "$ALGO_FILE" ]; then
+            echo "ERROR: Algorithm '${{ env.ALGORITHM_NAME }}' not found"
+            exit 1
+          fi
+          echo "ALGORITHM_PATH=$ALGO_FILE" >> $GITHUB_ENV
+          echo "Found: $ALGO_FILE"
+
+      - name: Train and validate model
+        run: |
+          python mlops/common/train_wrapper.py \
+            --algorithm-path "${{ env.ALGORITHM_PATH }}" \
+            --output-dir /tmp/model \
+            --hyperparams '${{ github.event.inputs.hyperparams || '{}' }}'
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-${{ env.ALGORITHM_NAME }}
+          path: /tmp/model/
+          retention-days: 7
+
+  # --- Build Container ---
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: mlops/common/Dockerfile
+          tags: ml-algorithms:${{ env.ALGORITHM_NAME }}-${{ github.sha }}
+          outputs: type=docker,dest=/tmp/image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload container image
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-${{ env.ALGORITHM_NAME }}
+          path: /tmp/image.tar
+          retention-days: 1
+
+  # --- Deploy to AWS SageMaker ---
+  deploy-aws:
+    if: ${{ github.event.inputs.cloud_provider == 'aws_sagemaker' || github.event_name == 'push' }}
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: model-${{ env.ALGORITHM_NAME }}
+          path: /tmp/model
+
+      - name: Download container
+        uses: actions/download-artifact@v4
+        with:
+          name: container-${{ env.ALGORITHM_NAME }}
+          path: /tmp
+
+      - name: Push container to ECR
+        env:
+          ECR_REPO: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ml-algorithms-${{ env.ENVIRONMENT }}
+        run: |
+          docker load -i /tmp/image.tar
+          docker tag ml-algorithms:${{ env.ALGORITHM_NAME }}-${{ github.sha }} \
+            $ECR_REPO:${{ env.ALGORITHM_NAME }}-latest
+          docker push $ECR_REPO:${{ env.ALGORITHM_NAME }}-latest
+
+      - name: Upload model to S3
+        run: |
+          cd /tmp/model
+          tar -czf model.tar.gz model.pkl metadata.json
+          aws s3 cp model.tar.gz \
+            s3://ml-algorithms-models-${{ env.ENVIRONMENT }}/${{ env.ALGORITHM_NAME }}/model.tar.gz
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Terraform Deploy
+        working-directory: mlops/aws_sagemaker/terraform
+        run: |
+          terraform init \
+            -backend-config="key=sagemaker/${{ env.ALGORITHM_NAME }}/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          terraform apply \
+            -var="algorithm_name=${{ env.ALGORITHM_NAME }}" \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -auto-approve
+
+      - name: Verify endpoint
+        run: |
+          aws sagemaker wait endpoint-in-service \
+            --endpoint-name "${{ env.ALGORITHM_NAME }}-${{ env.ENVIRONMENT }}"
+          echo "Endpoint is InService"
+
+  # --- Deploy to Azure ML ---
+  deploy-azure:
+    if: ${{ github.event.inputs.cloud_provider == 'azure_ml' }}
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: model-${{ env.ALGORITHM_NAME }}
+          path: /tmp/model
+
+      - name: Download container
+        uses: actions/download-artifact@v4
+        with:
+          name: container-${{ env.ALGORITHM_NAME }}
+          path: /tmp
+
+      - name: Push to ACR
+        env:
+          ACR_NAME: crmlalgo${{ env.ENVIRONMENT }}
+        run: |
+          az acr login --name $ACR_NAME
+          ACR_SERVER=$(az acr show --name $ACR_NAME --query loginServer -o tsv)
+          docker load -i /tmp/image.tar
+          docker tag ml-algorithms:${{ env.ALGORITHM_NAME }}-${{ github.sha }} \
+            $ACR_SERVER/ml-algorithms:${{ env.ALGORITHM_NAME }}-latest
+          docker push $ACR_SERVER/ml-algorithms:${{ env.ALGORITHM_NAME }}-latest
+
+      - name: Register model
+        run: |
+          az ml model create \
+            --name "${{ env.ALGORITHM_NAME }}-model" \
+            --path /tmp/model \
+            --resource-group "rg-ml-algorithms-${{ env.ENVIRONMENT }}" \
+            --workspace-name "mlw-algorithms-${{ env.ENVIRONMENT }}" \
+            --type custom_model
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Deploy
+        working-directory: mlops/azure_ml/terraform
+        run: |
+          terraform init \
+            -backend-config="key=azureml/${{ env.ALGORITHM_NAME }}/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          terraform apply \
+            -var="algorithm_name=${{ env.ALGORITHM_NAME }}" \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -auto-approve
+
+  # --- Deploy to Google Vertex AI ---
+  deploy-gcp:
+    if: ${{ github.event.inputs.cloud_provider == 'google_ml' }}
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: model-${{ env.ALGORITHM_NAME }}
+          path: /tmp/model
+
+      - name: Download container
+        uses: actions/download-artifact@v4
+        with:
+          name: container-${{ env.ALGORITHM_NAME }}
+          path: /tmp
+
+      - name: Push to Artifact Registry
+        env:
+          REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+          AR_REPO="${REGION}-docker.pkg.dev/${PROJECT_ID}/ml-algorithms-${{ env.ENVIRONMENT }}"
+          docker load -i /tmp/image.tar
+          docker tag ml-algorithms:${{ env.ALGORITHM_NAME }}-${{ github.sha }} \
+            ${AR_REPO}/ml-algorithms:${{ env.ALGORITHM_NAME }}-latest
+          docker push ${AR_REPO}/ml-algorithms:${{ env.ALGORITHM_NAME }}-latest
+
+      - name: Upload model to GCS
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gsutil cp /tmp/model/model.pkl \
+            gs://${PROJECT_ID}-ml-models-${{ env.ENVIRONMENT }}/${{ env.ALGORITHM_NAME }}/model.pkl
+          gsutil cp /tmp/model/metadata.json \
+            gs://${PROJECT_ID}-ml-models-${{ env.ENVIRONMENT }}/${{ env.ALGORITHM_NAME }}/metadata.json
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Deploy
+        working-directory: mlops/google_ml/terraform
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          terraform init \
+            -backend-config="prefix=vertex-ai/${{ env.ALGORITHM_NAME }}/${{ env.ENVIRONMENT }}"
+          terraform apply \
+            -var="project_id=${PROJECT_ID}" \
+            -var="algorithm_name=${{ env.ALGORITHM_NAME }}" \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -auto-approve

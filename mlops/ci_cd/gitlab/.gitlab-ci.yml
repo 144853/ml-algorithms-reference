@@ -1,0 +1,136 @@
+stages:
+  - validate
+  - build
+  - deploy
+
+variables:
+  ALGORITHM_NAME: "linear_regression_sklearn"
+  ENVIRONMENT: "dev"
+  CLOUD_PROVIDER: "aws_sagemaker"
+  HYPERPARAMS: "{}"
+
+# --- Validate & Train ---
+validate:
+  stage: validate
+  image: python:3.11-slim
+  script:
+    - pip install -r requirements.txt
+    - |
+      ALGO_FILE=$(find . -name "${ALGORITHM_NAME}.py" -not -path "*/mlops/*" | head -1)
+      if [ -z "$ALGO_FILE" ]; then
+        echo "ERROR: Algorithm '${ALGORITHM_NAME}' not found"
+        exit 1
+      fi
+      echo "Found: $ALGO_FILE"
+    - python mlops/common/train_wrapper.py
+        --algorithm-path "$ALGO_FILE"
+        --output-dir /tmp/model
+        --hyperparams "$HYPERPARAMS"
+  artifacts:
+    paths:
+      - /tmp/model/
+    expire_in: 1 day
+
+# --- Build Container ---
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t ml-algorithms:${ALGORITHM_NAME}-${CI_COMMIT_SHORT_SHA}
+        -f mlops/common/Dockerfile .
+    - docker save ml-algorithms:${ALGORITHM_NAME}-${CI_COMMIT_SHORT_SHA} > /tmp/image.tar
+  artifacts:
+    paths:
+      - /tmp/image.tar
+    expire_in: 1 day
+
+# --- Deploy to AWS ---
+deploy-aws:
+  stage: deploy
+  image: hashicorp/terraform:1.6
+  rules:
+    - if: $CLOUD_PROVIDER == "aws_sagemaker"
+  before_script:
+    - apk add --no-cache aws-cli docker
+    - aws configure set region ${AWS_REGION:-us-east-1}
+  script:
+    # Push container
+    - aws ecr get-login-password | docker login --username AWS --password-stdin
+        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+    - docker load -i /tmp/image.tar
+    - docker tag ml-algorithms:${ALGORITHM_NAME}-${CI_COMMIT_SHORT_SHA}
+        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ml-algorithms-${ENVIRONMENT}:${ALGORITHM_NAME}-latest
+    - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ml-algorithms-${ENVIRONMENT}:${ALGORITHM_NAME}-latest
+    # Upload model
+    - cd /tmp/model && tar -czf model.tar.gz model.pkl metadata.json
+    - aws s3 cp model.tar.gz s3://ml-algorithms-models-${ENVIRONMENT}/${ALGORITHM_NAME}/model.tar.gz
+    # Terraform
+    - cd ${CI_PROJECT_DIR}/mlops/aws_sagemaker/terraform
+    - terraform init -backend-config="key=sagemaker/${ALGORITHM_NAME}/${ENVIRONMENT}/terraform.tfstate"
+    - terraform apply
+        -var="algorithm_name=${ALGORITHM_NAME}"
+        -var="environment=${ENVIRONMENT}"
+        -auto-approve
+  environment:
+    name: ${ENVIRONMENT}
+
+# --- Deploy to Azure ---
+deploy-azure:
+  stage: deploy
+  image: hashicorp/terraform:1.6
+  rules:
+    - if: $CLOUD_PROVIDER == "azure_ml"
+  before_script:
+    - apk add --no-cache py3-pip docker
+    - pip install azure-cli
+    - az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+  script:
+    - az acr login --name crmlalgo${ENVIRONMENT}
+    - docker load -i /tmp/image.tar
+    - ACR_SERVER=$(az acr show --name crmlalgo${ENVIRONMENT} --query loginServer -o tsv)
+    - docker tag ml-algorithms:${ALGORITHM_NAME}-${CI_COMMIT_SHORT_SHA}
+        ${ACR_SERVER}/ml-algorithms:${ALGORITHM_NAME}-latest
+    - docker push ${ACR_SERVER}/ml-algorithms:${ALGORITHM_NAME}-latest
+    - az ml model create --name "${ALGORITHM_NAME}-model" --path /tmp/model
+        --resource-group "rg-ml-algorithms-${ENVIRONMENT}"
+        --workspace-name "mlw-algorithms-${ENVIRONMENT}" --type custom_model
+    - cd ${CI_PROJECT_DIR}/mlops/azure_ml/terraform
+    - terraform init -backend-config="key=azureml/${ALGORITHM_NAME}/${ENVIRONMENT}/terraform.tfstate"
+    - terraform apply
+        -var="algorithm_name=${ALGORITHM_NAME}"
+        -var="environment=${ENVIRONMENT}"
+        -auto-approve
+  environment:
+    name: ${ENVIRONMENT}
+
+# --- Deploy to GCP ---
+deploy-gcp:
+  stage: deploy
+  image: hashicorp/terraform:1.6
+  rules:
+    - if: $CLOUD_PROVIDER == "google_ml"
+  before_script:
+    - apk add --no-cache python3 docker
+    - echo "$GCP_SA_KEY" > /tmp/sa-key.json
+    - gcloud auth activate-service-account --key-file=/tmp/sa-key.json
+    - gcloud config set project $GCP_PROJECT_ID
+  script:
+    - gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+    - AR_REPO="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/ml-algorithms-${ENVIRONMENT}"
+    - docker load -i /tmp/image.tar
+    - docker tag ml-algorithms:${ALGORITHM_NAME}-${CI_COMMIT_SHORT_SHA}
+        ${AR_REPO}/ml-algorithms:${ALGORITHM_NAME}-latest
+    - docker push ${AR_REPO}/ml-algorithms:${ALGORITHM_NAME}-latest
+    - gsutil cp /tmp/model/model.pkl gs://${GCP_PROJECT_ID}-ml-models-${ENVIRONMENT}/${ALGORITHM_NAME}/
+    - gsutil cp /tmp/model/metadata.json gs://${GCP_PROJECT_ID}-ml-models-${ENVIRONMENT}/${ALGORITHM_NAME}/
+    - cd ${CI_PROJECT_DIR}/mlops/google_ml/terraform
+    - terraform init -backend-config="prefix=vertex-ai/${ALGORITHM_NAME}/${ENVIRONMENT}"
+    - terraform apply
+        -var="project_id=${GCP_PROJECT_ID}"
+        -var="algorithm_name=${ALGORITHM_NAME}"
+        -var="environment=${ENVIRONMENT}"
+        -auto-approve
+  environment:
+    name: ${ENVIRONMENT}
