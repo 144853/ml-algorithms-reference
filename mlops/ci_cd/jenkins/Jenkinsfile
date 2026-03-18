@@ -1,0 +1,161 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'ALGORITHM_NAME', defaultValue: 'linear_regression_sklearn',
+               description: 'Algorithm to deploy (e.g., linear_regression_sklearn, random_forest_sklearn)')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'],
+               description: 'Target environment')
+        choice(name: 'CLOUD_PROVIDER', choices: ['aws_sagemaker', 'azure_ml', 'google_ml'],
+               description: 'Cloud provider')
+        string(name: 'HYPERPARAMS', defaultValue: '{}',
+               description: 'JSON hyperparameters (optional)')
+    }
+
+    environment {
+        ALGORITHM_NAME = "${params.ALGORITHM_NAME}"
+        ENVIRONMENT    = "${params.ENVIRONMENT}"
+        CLOUD_PROVIDER = "${params.CLOUD_PROVIDER}"
+    }
+
+    stages {
+        stage('Validate') {
+            steps {
+                sh '''
+                    ALGO_FILE=$(find . -name "${ALGORITHM_NAME}.py" -not -path "*/mlops/*" | head -1)
+                    if [ -z "$ALGO_FILE" ]; then
+                        echo "ERROR: Algorithm not found"
+                        exit 1
+                    fi
+                    echo "Found: $ALGO_FILE"
+                    echo "$ALGO_FILE" > /tmp/algo_path.txt
+                '''
+            }
+        }
+
+        stage('Train') {
+            steps {
+                sh '''
+                    pip install -r requirements.txt
+                    ALGO_FILE=$(cat /tmp/algo_path.txt)
+                    python mlops/common/train_wrapper.py \
+                        --algorithm-path "$ALGO_FILE" \
+                        --output-dir /tmp/model \
+                        --hyperparams '${HYPERPARAMS}'
+                '''
+                archiveArtifacts artifacts: '/tmp/model/**', fingerprint: true
+            }
+        }
+
+        stage('Build Container') {
+            steps {
+                sh '''
+                    docker build -t ml-algorithms:${ALGORITHM_NAME}-${BUILD_NUMBER} \
+                        -f mlops/common/Dockerfile .
+                '''
+            }
+        }
+
+        stage('Deploy - AWS SageMaker') {
+            when { expression { params.CLOUD_PROVIDER == 'aws_sagemaker' } }
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: 'aws-credentials']]) {
+                    sh '''
+                        # Push container
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                            docker login --username AWS --password-stdin \
+                            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                        docker tag ml-algorithms:${ALGORITHM_NAME}-${BUILD_NUMBER} \
+                            ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ml-algorithms-${ENVIRONMENT}:${ALGORITHM_NAME}-latest
+                        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ml-algorithms-${ENVIRONMENT}:${ALGORITHM_NAME}-latest
+
+                        # Upload model
+                        cd /tmp/model && tar -czf model.tar.gz model.pkl metadata.json
+                        aws s3 cp model.tar.gz s3://ml-algorithms-models-${ENVIRONMENT}/${ALGORITHM_NAME}/model.tar.gz
+
+                        # Terraform
+                        cd ${WORKSPACE}/mlops/aws_sagemaker/terraform
+                        terraform init -backend-config="key=sagemaker/${ALGORITHM_NAME}/${ENVIRONMENT}/terraform.tfstate"
+                        terraform apply \
+                            -var="algorithm_name=${ALGORITHM_NAME}" \
+                            -var="environment=${ENVIRONMENT}" \
+                            -auto-approve
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy - Azure ML') {
+            when { expression { params.CLOUD_PROVIDER == 'azure_ml' } }
+            steps {
+                withCredentials([azureServicePrincipal('azure-credentials')]) {
+                    sh '''
+                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+
+                        # Push container
+                        az acr login --name crmlalgo${ENVIRONMENT}
+                        ACR_SERVER=$(az acr show --name crmlalgo${ENVIRONMENT} --query loginServer -o tsv)
+                        docker tag ml-algorithms:${ALGORITHM_NAME}-${BUILD_NUMBER} \
+                            ${ACR_SERVER}/ml-algorithms:${ALGORITHM_NAME}-latest
+                        docker push ${ACR_SERVER}/ml-algorithms:${ALGORITHM_NAME}-latest
+
+                        # Register model
+                        az ml model create --name "${ALGORITHM_NAME}-model" --path /tmp/model \
+                            --resource-group "rg-ml-algorithms-${ENVIRONMENT}" \
+                            --workspace-name "mlw-algorithms-${ENVIRONMENT}" --type custom_model
+
+                        # Terraform
+                        cd ${WORKSPACE}/mlops/azure_ml/terraform
+                        terraform init -backend-config="key=azureml/${ALGORITHM_NAME}/${ENVIRONMENT}/terraform.tfstate"
+                        terraform apply \
+                            -var="algorithm_name=${ALGORITHM_NAME}" \
+                            -var="environment=${ENVIRONMENT}" \
+                            -auto-approve
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy - Google Vertex AI') {
+            when { expression { params.CLOUD_PROVIDER == 'google_ml' } }
+            steps {
+                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_KEY_FILE')]) {
+                    sh '''
+                        gcloud auth activate-service-account --key-file=$GCP_KEY_FILE
+                        gcloud config set project $GCP_PROJECT_ID
+
+                        # Push container
+                        gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+                        AR_REPO="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/ml-algorithms-${ENVIRONMENT}"
+                        docker tag ml-algorithms:${ALGORITHM_NAME}-${BUILD_NUMBER} \
+                            ${AR_REPO}/ml-algorithms:${ALGORITHM_NAME}-latest
+                        docker push ${AR_REPO}/ml-algorithms:${ALGORITHM_NAME}-latest
+
+                        # Upload model
+                        gsutil cp /tmp/model/model.pkl gs://${GCP_PROJECT_ID}-ml-models-${ENVIRONMENT}/${ALGORITHM_NAME}/
+                        gsutil cp /tmp/model/metadata.json gs://${GCP_PROJECT_ID}-ml-models-${ENVIRONMENT}/${ALGORITHM_NAME}/
+
+                        # Terraform
+                        cd ${WORKSPACE}/mlops/google_ml/terraform
+                        terraform init -backend-config="prefix=vertex-ai/${ALGORITHM_NAME}/${ENVIRONMENT}"
+                        terraform apply \
+                            -var="project_id=${GCP_PROJECT_ID}" \
+                            -var="algorithm_name=${ALGORITHM_NAME}" \
+                            -var="environment=${ENVIRONMENT}" \
+                            -auto-approve
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment of ${ALGORITHM_NAME} to ${CLOUD_PROVIDER} (${ENVIRONMENT}) succeeded!"
+        }
+        failure {
+            echo "Deployment failed. Check logs for details."
+        }
+    }
+}
